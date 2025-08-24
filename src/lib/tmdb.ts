@@ -49,6 +49,20 @@ export interface SearchResults {
   total_results: number;
 }
 
+export interface Video {
+  id: string;
+  key: string;
+  name: string;
+  site: string;
+  type: string;
+  official: boolean;
+  published_at: string;
+}
+
+export interface VideosResponse {
+  results: Video[];
+}
+
 const BASE_URL = 'https://api.themoviedb.org/3';
 const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p';
 
@@ -98,6 +112,11 @@ export const getMovieDetails = async (movieId: number): Promise<MovieDetails> =>
 // Get movie credits
 export const getMovieCredits = async (movieId: number): Promise<Credits> => {
   return apiRequest<Credits>(`/movie/${movieId}/credits`);
+};
+
+// Get movie videos/trailers
+export const getMovieVideos = async (movieId: number): Promise<VideosResponse> => {
+  return apiRequest<VideosResponse>(`/movie/${movieId}/videos`);
 };
 
 // Get now playing movies

@@ -1,19 +1,21 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { MovieDetails as MovieDetailsType, Credits, getMovieDetails, getMovieCredits, getBackdropUrl, getPosterUrl, formatRating, formatRuntime } from "@/lib/tmdb";
+import { MovieDetails as MovieDetailsType, Credits, Video, getMovieDetails, getMovieCredits, getMovieVideos, getBackdropUrl, getPosterUrl, formatRating, formatRuntime } from "@/lib/tmdb";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Star, Calendar, Clock, DollarSign } from "lucide-react";
+import { ArrowLeft, Star, Calendar, Clock, DollarSign, Play } from "lucide-react";
 
 export const MovieDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [movie, setMovie] = useState<MovieDetailsType | null>(null);
   const [credits, setCredits] = useState<Credits | null>(null);
+  const [videos, setVideos] = useState<Video[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showTrailer, setShowTrailer] = useState(false);
 
   useEffect(() => {
     const fetchMovieData = async () => {
@@ -23,13 +25,18 @@ export const MovieDetails = () => {
       setError(null);
       
       try {
-        const [movieData, creditsData] = await Promise.all([
+        const [movieData, creditsData, videosData] = await Promise.all([
           getMovieDetails(parseInt(id)),
-          getMovieCredits(parseInt(id))
+          getMovieCredits(parseInt(id)),
+          getMovieVideos(parseInt(id))
         ]);
         
         setMovie(movieData);
         setCredits(creditsData);
+        setVideos(videosData.results.filter(video => 
+          video.site === 'YouTube' && 
+          (video.type === 'Trailer' || video.type === 'Teaser')
+        ));
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load movie details");
       } finally {
@@ -76,6 +83,7 @@ export const MovieDetails = () => {
   if (!movie) return null;
 
   const mainCast = credits?.cast.slice(0, 6) || [];
+  const trailer = videos.find(video => video.type === 'Trailer') || videos[0];
 
   return (
     <div className="min-h-screen bg-background">
@@ -196,6 +204,18 @@ export const MovieDetails = () => {
                 )}
               </div>
             )}
+
+            {/* Trailer Button */}
+            {trailer && (
+              <Button
+                onClick={() => setShowTrailer(true)}
+                className="bg-cinema-gold hover:bg-cinema-gold/90 text-cinema-dark font-semibold"
+                size="lg"
+              >
+                <Play className="w-5 h-5 mr-2" />
+                Watch Trailer
+              </Button>
+            )}
           </div>
         </div>
 
@@ -223,6 +243,33 @@ export const MovieDetails = () => {
                   </div>
                 </Card>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Trailer Modal */}
+        {showTrailer && trailer && (
+          <div 
+            className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            onClick={() => setShowTrailer(false)}
+          >
+            <div 
+              className="relative w-full max-w-4xl aspect-video bg-black rounded-lg overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setShowTrailer(false)}
+                className="absolute top-4 right-4 z-10 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-colors"
+              >
+                ✕
+              </button>
+              <iframe
+                src={`https://www.youtube.com/embed/${trailer.key}?autoplay=1&rel=0`}
+                title={trailer.name}
+                className="w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
             </div>
           </div>
         )}
