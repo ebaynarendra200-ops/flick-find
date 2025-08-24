@@ -64,7 +64,8 @@ const getApiKey = (): string => {
 // Helper function to make API requests
 const apiRequest = async <T>(endpoint: string): Promise<T> => {
   const apiKey = getApiKey();
-  const response = await fetch(`${BASE_URL}${endpoint}?api_key=${apiKey}`);
+  const separator = endpoint.includes('?') ? '&' : '?';
+  const response = await fetch(`${BASE_URL}${endpoint}${separator}api_key=${apiKey}`);
   
   if (!response.ok) {
     throw new Error(`API request failed: ${response.statusText}`);
