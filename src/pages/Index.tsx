@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Film, TrendingUp, Star, Settings } from "lucide-react";
 
 const Index = () => {
+  console.log("Index component rendering...");
   const [movies, setMovies] = useState<Movie[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
