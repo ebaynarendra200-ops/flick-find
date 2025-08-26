@@ -67,7 +67,7 @@ const BASE_URL = 'https://api.themoviedb.org/3';
 const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p';
 
 // TMDB API key configuration
-const API_KEY = 'YOUR_TMDB_API_KEY_HERE'; // Replace with your actual TMDB API key
+const API_KEY = 'be2ad7b94998276436cafab122bee66f'; // Replace with your actual TMDB API key
 
 // Get API key - uses configured key as fallback
 const getApiKey = (): string => {
@@ -75,7 +75,7 @@ const getApiKey = (): string => {
   const storedKey = localStorage.getItem('tmdb_api_key');
   if (storedKey) return storedKey;
   
-  if (!API_KEY || API_KEY === 'YOUR_TMDB_API_KEY_HERE') {
+  if (!API_KEY || API_KEY === 'be2ad7b94998276436cafab122bee66f') {
     throw new Error('TMDB API key not found. Please add your API key in the settings.');
   }
   return API_KEY;
