@@ -134,6 +134,15 @@ export const getUpcomingMovies = async (page = 1): Promise<SearchResults> => {
   return apiRequest<SearchResults>(`/movie/upcoming?page=${page}`);
 };
 
+// Get top 10 rated movies (IMDb equivalent)
+export const getTop10Movies = async (): Promise<SearchResults> => {
+  const data = await apiRequest<SearchResults>(`/movie/top_rated?page=1`);
+  return {
+    ...data,
+    results: data.results.slice(0, 10)
+  };
+};
+
 // Image URL helpers
 export const getImageUrl = (path: string, size: 'w200' | 'w300' | 'w400' | 'w500' | 'w780' | 'original' = 'w500'): string => {
   if (!path) return '/placeholder.svg';

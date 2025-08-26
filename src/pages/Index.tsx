@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { Movie, getTrendingMovies, searchMovies, getPopularMovies, isApiKeySet } from "@/lib/tmdb";
+import { Movie, getTrendingMovies, searchMovies, getPopularMovies, getTop10Movies, isApiKeySet } from "@/lib/tmdb";
 import { MovieCard } from "@/components/MovieCard";
 import { SearchBar } from "@/components/SearchBar";
 import { ApiKeyDialog } from "@/components/ApiKeyDialog";
@@ -15,7 +15,7 @@ const Index = () => {
   const [movies, setMovies] = useState<Movie[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [currentCategory, setCurrentCategory] = useState<"trending" | "popular">("trending");
+  const [currentCategory, setCurrentCategory] = useState<"trending" | "popular" | "top10">("trending");
   const [showApiDialog, setShowApiDialog] = useState(false);
   const { toast } = useToast();
 
@@ -38,7 +38,9 @@ const Index = () => {
     try {
       const data = currentCategory === "trending" 
         ? await getTrendingMovies()
-        : await getPopularMovies();
+        : currentCategory === "popular"
+        ? await getPopularMovies()
+        : await getTop10Movies();
       setMovies(data.results);
     } catch (error) {
       console.error("Error loading movies:", error);
@@ -81,7 +83,7 @@ const Index = () => {
     }
   };
 
-  const handleCategoryChange = (category: "trending" | "popular") => {
+  const handleCategoryChange = (category: "trending" | "popular" | "top10") => {
     setCurrentCategory(category);
     setSearchQuery("");
   };
@@ -169,6 +171,17 @@ const Index = () => {
               <Star className="w-4 h-4 mr-2" />
               Popular
             </Button>
+            <Button
+              variant={currentCategory === "top10" ? "default" : "outline"}
+              onClick={() => handleCategoryChange("top10")}
+              className={currentCategory === "top10" 
+                ? "bg-cinema-primary hover:bg-cinema-primary/80 text-cinema-dark" 
+                : "border-cinema-surface hover:bg-cinema-surface"
+              }
+            >
+              <Film className="w-4 h-4 mr-2" />
+              Top 10 IMDb
+            </Button>
           </div>
         )}
 
@@ -188,13 +201,18 @@ const Index = () => {
         {!searchQuery && isApiKeySet() && (
           <div className="mb-8 text-center">
             <h2 className="text-3xl font-bold text-foreground mb-2">
-              {currentCategory === "trending" ? "Trending Movies" : "Popular Movies"}
+              {currentCategory === "trending" 
+                ? "Trending Movies" 
+                : currentCategory === "popular" 
+                ? "Popular Movies"
+                : "Top 10 on IMDb This Week"}
             </h2>
             <p className="text-muted-foreground">
               {currentCategory === "trending" 
                 ? "What's hot right now in cinema" 
-                : "The most popular movies of all time"
-              }
+                : currentCategory === "popular"
+                ? "The most popular movies of all time"
+                : "The highest rated movies according to IMDb"}
             </p>
           </div>
         )}
