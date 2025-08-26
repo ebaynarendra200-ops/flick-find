@@ -1,3 +1,4 @@
+
 // TMDB API integration utilities
 
 export interface Movie {
@@ -66,19 +67,14 @@ export interface VideosResponse {
 const BASE_URL = 'https://api.themoviedb.org/3';
 const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p';
 
-// TMDB API key configuration
-const API_KEY = 'be2ad7b94998276436cafab122bee66f'; // Replace with your actual TMDB API key
-
-// Get API key - uses configured key as fallback
+// Get API key from localStorage
 const getApiKey = (): string => {
-  // Try localStorage first, then fall back to configured key
   const storedKey = localStorage.getItem('tmdb_api_key');
-  if (storedKey) return storedKey;
-  
-  if (!API_KEY || API_KEY === 'be2ad7b94998276436cafab122bee66f') {
-    throw new Error('TMDB API key not found. Please add your API key in the settings.');
+  if (storedKey && storedKey.trim()) {
+    return storedKey.trim();
   }
-  return API_KEY;
+  
+  throw new Error('TMDB API key not found. Please add your API key in the settings.');
 };
 
 // Helper function to make API requests
@@ -88,6 +84,9 @@ const apiRequest = async <T>(endpoint: string): Promise<T> => {
   const response = await fetch(`${BASE_URL}${endpoint}${separator}api_key=${apiKey}`);
   
   if (!response.ok) {
+    if (response.status === 401) {
+      throw new Error('Invalid API key. Please check your TMDB API key.');
+    }
     throw new Error(`API request failed: ${response.statusText}`);
   }
   
@@ -158,10 +157,11 @@ export const formatRuntime = (minutes: number): string => {
 
 // Check if API key is set
 export const isApiKeySet = (): boolean => {
-  return !!localStorage.getItem('tmdb_api_key') || (API_KEY && API_KEY !== 'be2ad7b94998276436cafab122bee66f');
+  const storedKey = localStorage.getItem('tmdb_api_key');
+  return !!(storedKey && storedKey.trim());
 };
 
 // Set API key
 export const setApiKey = (apiKey: string): void => {
-  localStorage.setItem('tmdb_api_key', apiKey);
+  localStorage.setItem('tmdb_api_key', apiKey.trim());
 };

@@ -1,12 +1,14 @@
+
 import React, { useState, useEffect } from "react";
-import { Movie, getTrendingMovies, searchMovies, getPopularMovies } from "@/lib/tmdb";
+import { Movie, getTrendingMovies, searchMovies, getPopularMovies, isApiKeySet } from "@/lib/tmdb";
 import { MovieCard } from "@/components/MovieCard";
 import { SearchBar } from "@/components/SearchBar";
+import { ApiKeyDialog } from "@/components/ApiKeyDialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Film, TrendingUp, Star } from "lucide-react";
+import { Film, TrendingUp, Star, Settings } from "lucide-react";
 
 const Index = () => {
   console.log("Index component rendering...");
@@ -14,14 +16,24 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentCategory, setCurrentCategory] = useState<"trending" | "popular">("trending");
+  const [showApiDialog, setShowApiDialog] = useState(false);
   const { toast } = useToast();
 
-  // Load movies on component mount
+  // Check for API key on load
   useEffect(() => {
-    loadMovies();
+    if (!isApiKeySet()) {
+      setShowApiDialog(true);
+    } else {
+      loadMovies();
+    }
   }, []);
 
   const loadMovies = async () => {
+    if (!isApiKeySet()) {
+      setShowApiDialog(true);
+      return;
+    }
+    
     setIsLoading(true);
     try {
       const data = currentCategory === "trending" 
@@ -29,6 +41,7 @@ const Index = () => {
         : await getPopularMovies();
       setMovies(data.results);
     } catch (error) {
+      console.error("Error loading movies:", error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to load movies",
@@ -40,6 +53,11 @@ const Index = () => {
   };
 
   const handleSearch = async (query: string) => {
+    if (!isApiKeySet()) {
+      setShowApiDialog(true);
+      return;
+    }
+
     setSearchQuery(query);
     
     if (!query.trim()) {
@@ -52,6 +70,7 @@ const Index = () => {
       const data = await searchMovies(query);
       setMovies(data.results);
     } catch (error) {
+      console.error("Error searching movies:", error);
       toast({
         title: "Search Error",
         description: error instanceof Error ? error.message : "Failed to search movies",
@@ -69,10 +88,18 @@ const Index = () => {
 
   // Reload movies when category changes
   useEffect(() => {
-    if (!searchQuery) {
+    if (isApiKeySet() && !searchQuery) {
       loadMovies();
     }
   }, [currentCategory]);
+
+  const handleApiKeySet = () => {
+    loadMovies();
+    toast({
+      title: "Success",
+      description: "API key saved successfully!",
+    });
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -98,6 +125,19 @@ const Index = () => {
                 placeholder="Search for movies, actors, directors..."
               />
             </div>
+            
+            {/* Settings Button */}
+            <div className="flex justify-center pt-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowApiDialog(true)}
+                className="text-muted-foreground hover:text-cinema-gold"
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                API Settings
+              </Button>
+            </div>
           </div>
         </div>
       </section>
@@ -105,7 +145,7 @@ const Index = () => {
       {/* Content Section */}
       <main className="container mx-auto px-4 py-12">
         {/* Category Filters */}
-        {!searchQuery && (
+        {!searchQuery && isApiKeySet() && (
           <div className="flex flex-wrap gap-3 mb-8 justify-center">
             <Button
               variant={currentCategory === "trending" ? "default" : "outline"}
@@ -133,7 +173,7 @@ const Index = () => {
         )}
 
         {/* Search Results Header */}
-        {searchQuery && (
+        {searchQuery && isApiKeySet() && (
           <div className="mb-8 text-center">
             <h2 className="text-2xl font-semibold text-foreground mb-2">
               Search Results for "{searchQuery}"
@@ -145,7 +185,7 @@ const Index = () => {
         )}
 
         {/* Section Title */}
-        {!searchQuery && (
+        {!searchQuery && isApiKeySet() && (
           <div className="mb-8 text-center">
             <h2 className="text-3xl font-bold text-foreground mb-2">
               {currentCategory === "trending" ? "Trending Movies" : "Popular Movies"}
@@ -160,7 +200,7 @@ const Index = () => {
         )}
 
         {/* Loading State */}
-        {isLoading && (
+        {isLoading && isApiKeySet() && (
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
             {Array.from({ length: 12 }).map((_, i) => (
               <div key={i} className="space-y-3">
@@ -173,7 +213,7 @@ const Index = () => {
         )}
 
         {/* Movies Grid */}
-        {!isLoading && movies.length > 0 && (
+        {!isLoading && movies.length > 0 && isApiKeySet() && (
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
             {movies.map((movie) => (
               <MovieCard key={movie.id} movie={movie} />
@@ -182,7 +222,7 @@ const Index = () => {
         )}
 
         {/* No Results */}
-        {!isLoading && movies.length === 0 && searchQuery && (
+        {!isLoading && movies.length === 0 && searchQuery && isApiKeySet() && (
           <div className="text-center py-16">
             <Film className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-foreground mb-2">
@@ -201,7 +241,32 @@ const Index = () => {
           </div>
         )}
 
+        {/* Welcome Message (No API Key) */}
+        {!isApiKeySet() && !isLoading && (
+          <div className="text-center py-16">
+            <Film className="w-16 h-16 text-cinema-gold mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-foreground mb-2">
+              Welcome to FlickFind
+            </h3>
+            <p className="text-muted-foreground mb-6">
+              Get started by adding your TMDB API key to explore thousands of movies
+            </p>
+            <Button 
+              onClick={() => setShowApiDialog(true)}
+              className="bg-cinema-primary hover:bg-cinema-primary/80 text-cinema-dark"
+            >
+              Add API Key
+            </Button>
+          </div>
+        )}
       </main>
+
+      {/* API Key Dialog */}
+      <ApiKeyDialog
+        open={showApiDialog}
+        onOpenChange={setShowApiDialog}
+        onApiKeySet={handleApiKeySet}
+      />
     </div>
   );
 };
