@@ -158,7 +158,7 @@ export const formatRuntime = (minutes: number): string => {
 
 // Check if API key is set
 export const isApiKeySet = (): boolean => {
-  return !!localStorage.getItem('tmdb_api_key') || (API_KEY && API_KEY !== 'YOUR_TMDB_API_KEY_HERE');
+  return !!localStorage.getItem('tmdb_api_key') || (API_KEY && API_KEY !== 'be2ad7b94998276436cafab122bee66f');
 };
 
 // Set API key

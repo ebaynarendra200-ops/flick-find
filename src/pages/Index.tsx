@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Movie, getTrendingMovies, searchMovies, getPopularMovies, isApiKeySet } from "@/lib/tmdb";
+import { Movie, getTrendingMovies, searchMovies, getPopularMovies } from "@/lib/tmdb";
 import { MovieCard } from "@/components/MovieCard";
 import { SearchBar } from "@/components/SearchBar";
-import { ApiKeyDialog } from "@/components/ApiKeyDialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Film, TrendingUp, Star, Settings } from "lucide-react";
+import { Film, TrendingUp, Star } from "lucide-react";
 
 const Index = () => {
   console.log("Index component rendering...");
@@ -15,21 +14,14 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentCategory, setCurrentCategory] = useState<"trending" | "popular">("trending");
-  const [showApiDialog, setShowApiDialog] = useState(false);
   const { toast } = useToast();
 
-  // Check for API key on load
+  // Load movies on component mount
   useEffect(() => {
-    if (!isApiKeySet()) {
-      setShowApiDialog(true);
-    } else {
-      loadMovies();
-    }
+    loadMovies();
   }, []);
 
   const loadMovies = async () => {
-    if (!isApiKeySet()) return;
-    
     setIsLoading(true);
     try {
       const data = currentCategory === "trending" 
@@ -48,11 +40,6 @@ const Index = () => {
   };
 
   const handleSearch = async (query: string) => {
-    if (!isApiKeySet()) {
-      setShowApiDialog(true);
-      return;
-    }
-
     setSearchQuery(query);
     
     if (!query.trim()) {
@@ -82,18 +69,10 @@ const Index = () => {
 
   // Reload movies when category changes
   useEffect(() => {
-    if (isApiKeySet() && !searchQuery) {
+    if (!searchQuery) {
       loadMovies();
     }
   }, [currentCategory]);
-
-  const handleApiKeySet = () => {
-    loadMovies();
-    toast({
-      title: "Success",
-      description: "API key saved successfully!",
-    });
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -118,19 +97,6 @@ const Index = () => {
                 isLoading={isLoading}
                 placeholder="Search for movies, actors, directors..."
               />
-            </div>
-            
-            {/* Settings Button */}
-            <div className="flex justify-center pt-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowApiDialog(true)}
-                className="text-muted-foreground hover:text-cinema-gold"
-              >
-                <Settings className="w-4 h-4 mr-2" />
-                API Settings
-              </Button>
             </div>
           </div>
         </div>
@@ -235,32 +201,7 @@ const Index = () => {
           </div>
         )}
 
-        {/* Welcome Message (No API Key) */}
-        {!isApiKeySet() && !isLoading && (
-          <div className="text-center py-16">
-            <Film className="w-16 h-16 text-cinema-gold mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-foreground mb-2">
-              Welcome to FlickFind
-            </h3>
-            <p className="text-muted-foreground mb-6">
-              Get started by adding your TMDB API key to explore thousands of movies
-            </p>
-            <Button 
-              onClick={() => setShowApiDialog(true)}
-              className="bg-cinema-primary hover:bg-cinema-primary/80 text-cinema-dark"
-            >
-              Add API Key
-            </Button>
-          </div>
-        )}
       </main>
-
-      {/* API Key Dialog */}
-      <ApiKeyDialog
-        open={showApiDialog}
-        onOpenChange={setShowApiDialog}
-        onApiKeySet={handleApiKeySet}
-      />
     </div>
   );
 };
