@@ -66,13 +66,19 @@ export interface VideosResponse {
 const BASE_URL = 'https://api.themoviedb.org/3';
 const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p';
 
-// Get API key from localStorage for now (frontend-only solution)
+// TMDB API key configuration
+const API_KEY = 'YOUR_TMDB_API_KEY_HERE'; // Replace with your actual TMDB API key
+
+// Get API key - uses configured key as fallback
 const getApiKey = (): string => {
-  const apiKey = localStorage.getItem('tmdb_api_key');
-  if (!apiKey) {
+  // Try localStorage first, then fall back to configured key
+  const storedKey = localStorage.getItem('tmdb_api_key');
+  if (storedKey) return storedKey;
+  
+  if (!API_KEY || API_KEY === 'YOUR_TMDB_API_KEY_HERE') {
     throw new Error('TMDB API key not found. Please add your API key in the settings.');
   }
-  return apiKey;
+  return API_KEY;
 };
 
 // Helper function to make API requests
@@ -152,7 +158,7 @@ export const formatRuntime = (minutes: number): string => {
 
 // Check if API key is set
 export const isApiKeySet = (): boolean => {
-  return !!localStorage.getItem('tmdb_api_key');
+  return !!localStorage.getItem('tmdb_api_key') || (API_KEY && API_KEY !== 'YOUR_TMDB_API_KEY_HERE');
 };
 
 // Set API key
